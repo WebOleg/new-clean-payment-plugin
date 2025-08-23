@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: BNA WordPress Plugin
+ * Plugin Name: BNA WordPress Plugin New
  * Plugin URI: https://bnasmartpayment.com
  * Description: Simple and flexible WooCommerce payment gateway for BNA Smart Payment
  * Version: 1.0.0
  * Author: BNA Team
- * Text Domain: bna-payment-gateway
+ * Text Domain: bna-payment-gateway-new
  */
 
 // Security check
