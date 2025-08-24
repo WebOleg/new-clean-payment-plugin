@@ -1,0 +1,149 @@
+/**
+ * BNA Bridge Admin Styles
+ * Styles for admin interface and settings
+ * 
+ * @package BNA_Payment_Bridge
+ * @subpackage Assets
+ */
+
+/* ==========================================================================
+   Connection Status
+   ========================================================================== */
+
+#bna-bridge-connection-status {
+    background: #f8f9fa;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+#bna-connection-indicator {
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+#bna-connection-indicator.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+#bna-connection-indicator.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+#bna-connection-indicator.testing {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* ==========================================================================
+   Test Connection Button
+   ========================================================================== */
+
+#bna-bridge-test-connection {
+    background: #0073aa !important;
+    color: white !important;
+    border-color: #005a87 !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+}
+
+#bna-bridge-test-connection:hover {
+    background: #005a87 !important;
+    border-color: #004a6e !important;
+}
+
+#bna-bridge-test-connection:disabled {
+    background: #cccccc !important;
+    border-color: #bbbbbb !important;
+    cursor: not-allowed !important;
+}
+
+#bna-test-result {
+    margin-left: 10px;
+    font-weight: 600;
+}
+
+#bna-test-result.success {
+    color: #155724;
+}
+
+#bna-test-result.error {
+    color: #721c24;
+}
+
+#bna-test-result.loading {
+    color: #856404;
+}
+
+/* ==========================================================================
+   Debug Information
+   ========================================================================== */
+
+#bna-bridge-debug-info {
+    background: #f8f9fa;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+#bna-bridge-debug-info h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+#bna-debug-output {
+    width: 100%;
+    min-height: 120px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    resize: vertical;
+}
+
+/* ==========================================================================
+   Loading Animation for Admin
+   ========================================================================== */
+
+.bna-admin-loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: bna-admin-spin 1s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes bna-admin-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Mobile Admin
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    #bna-bridge-connection-status {
+        padding: 12px;
+    }
+    
+    #bna-bridge-test-connection {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}

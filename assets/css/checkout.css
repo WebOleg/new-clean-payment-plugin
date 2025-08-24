@@ -1,0 +1,119 @@
+/**
+ * BNA Bridge Checkout Styles
+ * Basic container and UI styles (iframe styling handled by BNA)
+ * 
+ * @package BNA_Payment_Bridge
+ * @subpackage Assets
+ */
+
+/* ==========================================================================
+   Basic iframe Container
+   ========================================================================== */
+
+#bna-bridge-iframe-container {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    margin: 15px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.bna-bridge-iframe {
+    width: 100%;
+    min-height: 500px;
+    border: none;
+    display: block;
+}
+
+/* ==========================================================================
+   Loading State
+   ========================================================================== */
+
+#bna-bridge-iframe-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #666;
+    padding: 20px;
+}
+
+.bna-loading-spinner {
+    width: 30px;
+    height: 30px;
+    margin: 10px auto;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0073aa;
+    border-radius: 50%;
+    animation: bna-spin 1s linear infinite;
+}
+
+@keyframes bna-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Basic Messages
+   ========================================================================== */
+
+.bna-bridge-error {
+    padding: 15px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.bna-bridge-success {
+    padding: 15px;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.bna-bridge-error button {
+    margin-top: 10px;
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   Test Mode Notice
+   ========================================================================== */
+
+.bna-test-mode-notice {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 12px;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* ==========================================================================
+   Mobile Responsive
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    #bna-bridge-iframe-container {
+        min-height: 450px;
+        margin: 10px 0;
+    }
+    
+    .bna-bridge-iframe {
+        min-height: 450px;
+    }
+}
