@@ -91,7 +91,7 @@ class BNA_Bridge_Autoloader {
             return 'frontend';
         }
 
-        // WooCommerce classes (наприклад: gateway, helper і т.п.)
+        // WooCommerce classes
         if (strpos($class_name, 'gateway') !== false) {
             return 'woocommerce';
         }
