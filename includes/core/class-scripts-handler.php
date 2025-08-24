@@ -293,50 +293,11 @@ class BNA_Bridge_Scripts_Handler {
         if ($testmode) {
             return array(
                 'https://stage-api-service.bnasmartpayment.com',
-                'https://payment-test-iframe.bnasmartpayment.com'
             );
         }
         
         return array(
             'https://api-service.bnasmartpayment.com'
         );
-    }
-    
-    /**
-     * Register script dependencies
-     * Define script dependencies for proper loading order
-     * 
-     * @return void
-     */
-    public function register_dependencies() {
-        // Register jQuery UI components if needed
-        wp_register_script('jquery-ui-core', false, array('jquery'));
-        wp_register_script('jquery-ui-spinner', false, array('jquery-ui-core'));
-        
-        BNA_Bridge_Helper::log('Script dependencies registered', 'debug');
-    }
-    
-    /**
-     * Dequeue conflicting scripts
-     * Remove scripts that might conflict with iframe
-     * 
-     * @return void
-     */
-    public function dequeue_conflicting_scripts() {
-        if (!is_checkout()) {
-            return;
-        }
-        
-        // List of potentially conflicting scripts
-        $conflicting_scripts = array(
-            // Add any known conflicting scripts here
-        );
-        
-        foreach ($conflicting_scripts as $script) {
-            if (wp_script_is($script, 'enqueued')) {
-                wp_dequeue_script($script);
-                BNA_Bridge_Helper::log("Dequeued conflicting script: {$script}", 'debug');
-            }
-        }
     }
 }

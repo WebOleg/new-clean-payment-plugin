@@ -37,15 +37,40 @@
         init: function() {
             console.log('[BNA Checkout] Initializing...');
             
+            // Test AJAX first
+            this.testAjax();
+            
             this.bindEvents();
             this.setupMessageListener();
             
             // Load iframe if BNA gateway is selected
             if (this.isGatewaySelected()) {
+                console.log('[BNA Checkout] Gateway is selected, loading iframe');
                 this.loadIframe();
             }
             
             console.log('[BNA Checkout] Initialized successfully');
+        },
+
+        /**
+         * Test AJAX connection
+         */
+        testAjax: function() {
+            console.log('[BNA Checkout] Testing AJAX connection...');
+            
+            $.ajax({
+                url: bna_bridge_checkout.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'bna_test_simple'
+                },
+                success: function(response) {
+                    console.log('[BNA Checkout] AJAX test successful:', response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('[BNA Checkout] AJAX test failed:', status, error);
+                }
+            });
         },
 
         /**
@@ -56,6 +81,7 @@
             
             // Payment method change
             $('form.checkout').on('change', 'input[name="payment_method"]', function() {
+                console.log('[BNA Checkout] Payment method changed to:', $(this).val());
                 if ($(this).val() === self.config.gatewayId) {
                     self.onGatewaySelected();
                 } else {
@@ -73,6 +99,8 @@
             let reloadTimer;
             $(customerFields.join(', ')).on('input change', function() {
                 if (!self.isGatewaySelected()) return;
+                
+                console.log('[BNA Checkout] Customer field changed:', this.id);
                 
                 // Debounce iframe reload
                 clearTimeout(reloadTimer);
@@ -147,6 +175,8 @@
         loadIframe: function() {
             const self = this;
             
+            console.log('[BNA Checkout] Starting iframe load...');
+            
             if (this.state.paymentInProgress) {
                 console.log('[BNA Checkout] Payment in progress, skipping iframe load');
                 return;
@@ -156,12 +186,16 @@
             this.clearPaymentResult();
             
             const customerData = this.getCustomerData();
+            console.log('[BNA Checkout] Customer data collected:', customerData);
             
             // Validate required fields
             if (!this.validateCustomerData(customerData)) {
+                console.error('[BNA Checkout] Customer data validation failed');
                 this.showError(bna_bridge_checkout.messages.error_incomplete);
                 return;
             }
+            
+            console.log('[BNA Checkout] Making AJAX request to load iframe...');
             
             // Make AJAX request to load iframe
             $.ajax({
@@ -173,16 +207,36 @@
                     ...customerData
                 },
                 timeout: this.config.loadingTimeout,
+                beforeSend: function() {
+                    console.log('[BNA Checkout] AJAX request started');
+                },
                 success: function(response) {
+                    console.log('[BNA Checkout] AJAX response received:', response);
                     if (response.success) {
                         self.renderIframe(response.data);
                     } else {
+                        console.error('[BNA Checkout] AJAX returned error:', response.data);
                         self.showError(response.data.message || bna_bridge_checkout.messages.error_loading);
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('[BNA Checkout] AJAX error:', status, error);
-                    self.showError(bna_bridge_checkout.messages.connection_error);
+                    console.error('[BNA Checkout] AJAX error details:');
+                    console.error('Status:', status);
+                    console.error('Error:', error);
+                    console.error('Response Text:', xhr.responseText);
+                    console.error('Status Code:', xhr.status);
+                    
+                    let errorMessage = bna_bridge_checkout.messages.connection_error;
+                    
+                    if (xhr.status === 0) {
+                        errorMessage = 'Network error. Please check your connection.';
+                    } else if (xhr.status === 404) {
+                        errorMessage = 'AJAX endpoint not found. Please contact support.';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Server error. Please try again or contact support.';
+                    }
+                    
+                    self.showError(errorMessage);
                 }
             });
             
@@ -291,6 +345,7 @@
             
             iframe.onerror = function() {
                 clearTimeout(loadTimeout);
+                console.error('[BNA Checkout] Iframe failed to load');
                 self.showError(bna_bridge_checkout.messages.error_loading);
             };
         },
@@ -450,6 +505,7 @@
          * @param {string} message Error message
          */
         showError: function(message) {
+            console.error('[BNA Checkout] Showing error:', message);
             $(this.config.iframeContainer).html(`
                 <div class="bna-bridge-error">
                     <p><strong>Error:</strong> ${message}</p>
@@ -477,10 +533,13 @@
     $(document).ready(function() {
         // Only initialize if we're on checkout page with BNA gateway available
         if (typeof bna_bridge_checkout !== 'undefined') {
+            console.log('[BNA Checkout] Config loaded:', bna_bridge_checkout);
             BNACheckout.init();
             
             // Make BNACheckout available globally for debugging
             window.BNACheckout = BNACheckout;
+        } else {
+            console.log('[BNA Checkout] Config not loaded, skipping initialization');
         }
     });
 

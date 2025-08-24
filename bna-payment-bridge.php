@@ -92,9 +92,10 @@ final class BNA_Payment_Bridge {
         // Declare HPOS compatibility
         add_action('before_woocommerce_init', array($this, 'declare_hpos_compatibility'));
         
-        // AJAX hooks for API testing and token generation
+        // AJAX hooks - moved here from gateway
         add_action('wp_ajax_bna_bridge_test_connection', array($this, 'ajax_test_connection'));
-        add_action('wp_ajax_bna_bridge_generate_token', array($this, 'ajax_generate_token'));
+        add_action('wp_ajax_bna_bridge_load_iframe', array($this, 'ajax_load_iframe'));
+        add_action('wp_ajax_nopriv_bna_bridge_load_iframe', array($this, 'ajax_load_iframe'));
     }
 
     /**
@@ -295,34 +296,7 @@ final class BNA_Payment_Bridge {
         // Register payment gateway
         add_filter('woocommerce_payment_gateways', array($this, 'add_payment_gateway'));
 
-        // Update scripts handler settings (delayed to avoid gateway method issues)
-        add_action('init', array($this, 'update_scripts_handler_settings'), 20);
-
         BNA_Bridge_Helper::log("WooCommerce integration initialized", 'info');
-    }
-
-    /**
-     * Update scripts handler with gateway settings
-     * Pass current gateway settings to scripts handler
-     */
-    public function update_scripts_handler_settings() {
-        if (!$this->scripts_handler) {
-            return;
-        }
-
-        // Get gateway settings directly from options table to avoid method issues
-        $gateway_settings = get_option('woocommerce_bna_bridge_settings', array());
-        
-        if (!empty($gateway_settings)) {
-            $settings = array(
-                'testmode' => isset($gateway_settings['testmode']) ? $gateway_settings['testmode'] : 'yes',
-                'gateway_id' => 'bna_bridge',
-                'enabled' => isset($gateway_settings['enabled']) ? $gateway_settings['enabled'] : 'no'
-            );
-            
-            $this->scripts_handler->set_gateway_settings($settings);
-            BNA_Bridge_Helper::log("Scripts handler settings updated from options", 'debug');
-        }
     }
 
     /**
@@ -388,6 +362,51 @@ final class BNA_Payment_Bridge {
     public function get_scripts_handler() {
         return $this->scripts_handler;
     }
+
+    /**
+     * Get gateway instance
+     * 
+     * @return BNA_Bridge_Gateway|null
+     */
+    private function get_gateway_instance() {
+        if (!class_exists('WooCommerce')) {
+            return null;
+        }
+        
+        // Використовуємо правильний метод для отримання gateway
+        $gateways = WC()->payment_gateways()->get_available_payment_gateways();
+        
+        return isset($gateways['bna_bridge']) ? $gateways['bna_bridge'] : null;
+    }
+
+    /**
+     * AJAX handler for iframe loading
+     * Generate token and return iframe URL
+     */
+    public function ajax_load_iframe() {
+        BNA_Bridge_Helper::log("AJAX iframe load request received in main plugin", 'info');
+        
+        // Verify nonce for security
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'bna_bridge_checkout')) {
+            BNA_Bridge_Helper::log("Nonce verification failed", 'error');
+            wp_die(__('Security check failed', BNA_BRIDGE_TEXT_DOMAIN));
+        }
+
+        // Get gateway instance
+        $gateway = $this->get_gateway_instance();
+        
+        if (!$gateway || !$gateway->is_available()) {
+            BNA_Bridge_Helper::log("Gateway not available", 'error');
+            wp_send_json_error(array(
+                'message' => __('Payment gateway not available.', BNA_BRIDGE_TEXT_DOMAIN)
+            ));
+        }
+
+        BNA_Bridge_Helper::log("Delegating to gateway ajax_load_iframe method", 'debug');
+        
+        // Delegate to gateway
+        $gateway->ajax_load_iframe();
+    }
     
     /**
      * AJAX handler for connection testing
@@ -425,43 +444,6 @@ final class BNA_Payment_Bridge {
         } else {
             wp_send_json_error($result);
         }
-    }
-    
-    /**
-     * AJAX handler for token generation
-     * Generate iframe token via AJAX
-     */
-    public function ajax_generate_token() {
-        // Verify nonce for security
-        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'bna_bridge_checkout')) {
-            wp_die(__('Security check failed', BNA_BRIDGE_TEXT_DOMAIN));
-        }
-        
-        $api_integration = $this->get_api_integration();
-        
-        if (!$api_integration) {
-            wp_send_json_error(array(
-                'message' => __('API not configured', BNA_BRIDGE_TEXT_DOMAIN)
-            ));
-        }
-        
-        // Get checkout data from request
-        $checkout_data = json_decode(stripslashes($_POST['checkout_data'] ?? '{}'), true);
-        
-        $token_result = $api_integration->generate_iframe_token($checkout_data);
-        
-        if (is_wp_error($token_result)) {
-            wp_send_json_error(array(
-                'message' => $token_result->get_error_message()
-            ));
-        }
-        
-        wp_send_json_success(array(
-            'token' => $token_result['token'],
-            'iframe_url' => $api_integration->get_iframe_url($token_result['token']),
-            'expires_at' => $token_result['expires_at'],
-            'from_cache' => $token_result['from_cache']
-        ));
     }
 }
 

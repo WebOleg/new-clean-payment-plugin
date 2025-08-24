@@ -230,7 +230,28 @@ class BNA_Bridge_API_Integration {
             return new WP_Error('empty_checkout_data', 'Checkout data is required');
         }
         
+        // Спробуємо створити токен з існуючими даними
         $result = $this->token_manager->get_or_create_token($checkout_data, $force_refresh);
+        
+        // Якщо отримали помилку про існуючого кастомера, спробуємо без customer data
+        if (is_wp_error($result) && strpos($result->get_error_message(), 'Customer already exists') !== false) {
+            BNA_Bridge_Helper::log("Customer exists error, trying without customerInfo", 'info');
+            
+            // Видаляємо customerInfo і спробуємо ще раз - використовуємо тільки customerId
+            $checkout_data_without_customer = $checkout_data;
+            if (isset($checkout_data_without_customer['customerInfo'])) {
+                $email = $checkout_data_without_customer['customerInfo']['email'] ?? '';
+                unset($checkout_data_without_customer['customerInfo']);
+                
+                // Можемо додати customerId якщо маємо, або просто пропустити
+                if (!empty($email)) {
+                    // Генеруємо простий ID з email для тестування
+                    $checkout_data_without_customer['customerId'] = md5($email);
+                }
+            }
+            
+            $result = $this->token_manager->get_or_create_token($checkout_data_without_customer, $force_refresh);
+        }
         
         if (is_wp_error($result)) {
             BNA_Bridge_Helper::log("Token generation failed: " . $result->get_error_message(), 'error');
