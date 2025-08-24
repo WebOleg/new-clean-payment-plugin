@@ -2,7 +2,7 @@
 /**
  * BNA Payment Gateway
  * Basic WooCommerce payment gateway integration for BNA Smart Payment
- * 
+ *
  * @package BNA_Payment_Bridge
  * @subpackage WooCommerce
  */
@@ -17,11 +17,11 @@ if (!defined('ABSPATH')) {
  * Extends WooCommerce payment gateway functionality
  */
 class BNA_Bridge_Gateway extends WC_Payment_Gateway {
-    
+
     /**
      * Gateway constructor
      * Initialize gateway settings and properties
-     * 
+     *
      * @return void
      */
     public function __construct() {
@@ -30,42 +30,42 @@ class BNA_Bridge_Gateway extends WC_Payment_Gateway {
         $this->has_fields = true;
         $this->method_title = __('BNA Smart Payment', BNA_BRIDGE_TEXT_DOMAIN);
         $this->method_description = __('Accept payments via BNA Smart Payment iframe integration.', BNA_BRIDGE_TEXT_DOMAIN);
-        
+
         // Support features
         $this->supports = array(
             'products',
             'refunds'
         );
-        
+
         // Load settings
         $this->init_form_fields();
         $this->init_settings();
-        
+
         // Get settings values
         $this->title = $this->get_option('title');
         $this->description = $this->get_option('description');
         $this->enabled = $this->get_option('enabled');
         $this->testmode = 'yes' === $this->get_option('testmode');
-        
+
         // API credentials
         $this->access_key = $this->get_option('access_key');
         $this->secret_key = $this->get_option('secret_key');
         $this->iframe_id = $this->get_option('iframe_id');
-        
+
         // Set API endpoint based on test mode
-        $this->api_endpoint = $this->testmode 
-            ? 'https://api-staging.bnasmartpayment.com' 
+        $this->api_endpoint = $this->testmode
+            ? 'https://api-staging.bnasmartpayment.com'
             : 'https://api.bnasmartpayment.com';
-            
+
         // Admin hooks
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
         add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
     }
-    
+
     /**
      * Initialize gateway form fields
      * Define admin settings fields for the gateway
-     * 
+     *
      * @return void
      */
     public function init_form_fields() {
@@ -80,7 +80,7 @@ class BNA_Bridge_Gateway extends WC_Payment_Gateway {
                 'title' => __('Title', BNA_BRIDGE_TEXT_DOMAIN),
                 'type' => 'text',
                 'description' => __('Payment method title that customers will see on checkout.', BNA_BRIDGE_TEXT_DOMAIN),
-                'default' => __('Credit/Debit Card', BNA_BRIDGE_TEXT_DOMAIN),
+                'default' => __('BNA Payment', BNA_BRIDGE_TEXT_DOMAIN),
                 'desc_tip' => true,
             ),
             'description' => array(
@@ -120,11 +120,11 @@ class BNA_Bridge_Gateway extends WC_Payment_Gateway {
             ),
         );
     }
-    
+
     /**
      * Load payment scripts
      * Enqueue necessary scripts for payment processing
-     * 
+     *
      * @return void
      */
     public function payment_scripts() {
@@ -132,20 +132,22 @@ class BNA_Bridge_Gateway extends WC_Payment_Gateway {
         if (!is_checkout()) {
             return;
         }
-        
+
         // Only load if gateway is enabled
         if ('no' === $this->enabled) {
             return;
         }
-        
+
         // Script will be added in later stages
-        BNA_Bridge_Helper::log('Payment scripts loaded for checkout page');
+        if (class_exists('BNA_Bridge_Helper')) {
+            BNA_Bridge_Helper::log('Payment scripts loaded for checkout page');
+        }
     }
-    
+
     /**
      * Display payment fields
      * Show iframe container and loading message
-     * 
+     *
      * @return void
      */
     public function payment_fields() {
@@ -153,52 +155,54 @@ class BNA_Bridge_Gateway extends WC_Payment_Gateway {
         if ($this->description) {
             echo '<p>' . wp_kses_post($this->description) . '</p>';
         }
-        
+
         // Show test mode notice
         if ($this->testmode) {
             echo '<p style="color: #ff6600; font-weight: bold;">' . __('TEST MODE ENABLED - No real payments will be processed.', BNA_BRIDGE_TEXT_DOMAIN) . '</p>';
         }
-        
+
         // Check if credentials are configured
         if (empty($this->access_key) || empty($this->secret_key) || empty($this->iframe_id)) {
             echo '<p style="color: red;">' . __('Payment gateway is not properly configured. Please contact site administrator.', BNA_BRIDGE_TEXT_DOMAIN) . '</p>';
             return;
         }
-        
+
         // iframe container (will be populated by JavaScript in later stages)
         echo '<div id="bna-bridge-iframe-container" style="min-height: 400px; border: 1px solid #ddd; padding: 20px; text-align: center;">';
         echo '<p>' . __('Loading payment form...', BNA_BRIDGE_TEXT_DOMAIN) . '</p>';
         echo '<small style="color: #666;">' . __('iframe integration will be added in next development stage', BNA_BRIDGE_TEXT_DOMAIN) . '</small>';
         echo '</div>';
     }
-    
+
     /**
      * Process payment
      * Handle payment processing (placeholder for now)
-     * 
+     *
      * @param int $order_id Order ID
      * @return array Payment result
      */
     public function process_payment($order_id) {
         $order = wc_get_order($order_id);
-        
+
         // For now, just log the attempt
-        BNA_Bridge_Helper::log("Payment processing attempted for order #$order_id");
-        
+        if (class_exists('BNA_Bridge_Helper')) {
+            BNA_Bridge_Helper::log("Payment processing attempted for order #$order_id");
+        }
+
         // In next stages, this will handle actual payment processing
         // For now, mark as pending payment
         $order->update_status('pending', __('Awaiting BNA payment processing implementation.', BNA_BRIDGE_TEXT_DOMAIN));
-        
+
         return array(
             'result' => 'success',
             'redirect' => $this->get_return_url($order)
         );
     }
-    
+
     /**
      * Check if gateway is available
      * Determine if gateway should be available for use
-     * 
+     *
      * @return bool True if available
      */
     public function is_available() {
@@ -206,24 +210,30 @@ class BNA_Bridge_Gateway extends WC_Payment_Gateway {
         if ('yes' !== $this->enabled) {
             return false;
         }
-        
+
         // Check if WooCommerce is active
-        if (!BNA_Bridge_Helper::is_woocommerce_active()) {
+        if (class_exists('BNA_Bridge_Helper') && !BNA_Bridge_Helper::is_woocommerce_active()) {
             return false;
         }
-        
+
+        // For development, allow gateway even without credentials
+        // Remove this in production
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            return parent::is_available();
+        }
+
         // Check if required settings are configured
         if (empty($this->access_key) || empty($this->secret_key) || empty($this->iframe_id)) {
             return false;
         }
-        
+
         return parent::is_available();
     }
-    
+
     /**
      * Admin options output
      * Display admin configuration form
-     * 
+     *
      * @return void
      */
     public function admin_options() {
@@ -231,7 +241,7 @@ class BNA_Bridge_Gateway extends WC_Payment_Gateway {
         echo '<table class="form-table">';
         $this->generate_settings_html();
         echo '</table>';
-        
+
         // Add connection test button (will be functional in later stages)
         echo '<p><button type="button" class="button-secondary" disabled>' . __('Test Connection', BNA_BRIDGE_TEXT_DOMAIN) . '</button> ';
         echo '<small>' . __('Connection testing will be available in next development stage', BNA_BRIDGE_TEXT_DOMAIN) . '</small></p>';
