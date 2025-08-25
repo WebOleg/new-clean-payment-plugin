@@ -216,3 +216,26 @@
         transition: none;
     }
 }
+/* Приховати індикатори завантаження в iframe */
+.bna-payment-iframe {
+    min-height: 500px !important; /* Зменшений розмір */
+    max-height: 500px;
+}
+
+/* Приховати індикатори завантаження */
+.loading-dots,
+.loader,
+.progress-indicator,
+.progress-dots,
+[class*="loading"],
+[class*="progress"] {
+    display: none !important;
+}
+
+/* Для мобільних */
+@media (max-width: 768px) {
+    .bna-payment-iframe {
+        min-height: 400px !important;
+        max-height: 400px;
+    }
+}

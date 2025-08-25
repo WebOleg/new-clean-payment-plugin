@@ -1,6 +1,3 @@
-/**
- * BNA Payment Handler - Aggressive iframe destruction
- */
 (function($) {
     'use strict';
 
@@ -9,36 +6,61 @@
             this.config = null;
             this.iframe = null;
             this.processing = false;
-            this.destroyed = false;
+            this.messageContainer = null;
         }
 
         init() {
             this.config = window.bnaConfig || {};
             this.iframe = document.getElementById('bna-payment-iframe');
-
+            this.messageContainer = document.getElementById('bna-messages-container');
+            
+            console.log('BNA NEW VERSION: Config:', this.config);
+            console.log('BNA NEW VERSION: AJAX:', window.bna_ajax);
+            
             if (!this.config.orderId) {
-                console.error('BNA: Order ID not found');
+                console.error('BNA NEW: Order ID not found');
                 return;
             }
 
-            console.log('BNA: Initial iframe state:', this.iframe ? 'FOUND' : 'NOT FOUND');
             this.bindEvents();
-            console.log('BNA Payment Handler initialized');
+            console.log('BNA NEW: Payment Handler initialized for order:', this.config.orderId);
         }
 
         bindEvents() {
             window.addEventListener('message', this.handlePostMessage.bind(this), false);
+            
+            if (this.iframe) {
+                this.iframe.addEventListener('load', this.onIframeLoad.bind(this));
+                this.iframe.addEventListener('error', this.onIframeError.bind(this));
+            }
+        }
+
+        onIframeLoad() {
+            console.log('BNA NEW: Iframe loaded');
+            this.clearMessages();
+        }
+
+        onIframeError() {
+            console.error('BNA NEW: Iframe failed to load');
+            this.showMessage('error', 'Payment form failed to load.');
         }
 
         handlePostMessage(event) {
             if (this.config.apiOrigin && event.origin !== this.config.apiOrigin) {
+                console.log('BNA NEW: Ignoring message from', event.origin);
                 return;
             }
 
             const data = event.data;
-            console.log('BNA: Received message:', data);
+            console.log('BNA NEW: Received message:', data);
 
-            if (!data || !data.type || this.processing) {
+            if (!data || !data.type) {
+                console.log('BNA NEW: Invalid message data');
+                return;
+            }
+
+            if (this.processing) {
+                console.log('BNA NEW: Already processing, ignoring duplicate message');
                 return;
             }
 
@@ -52,144 +74,116 @@
                 case 'payment_error':
                     this.handlePaymentError(data.message || 'Payment error occurred');
                     break;
+                default:
+                    console.log('BNA NEW: Unknown message type:', data.type);
             }
         }
 
         handlePaymentSuccess(paymentData) {
-            console.log('BNA: Payment successful - starting aggressive cleanup');
+            console.log('BNA NEW: SUCCESS! Transaction ID:', paymentData.id);
+            
+            if (this.processing) {
+                console.log('BNA NEW: Duplicate success - ignoring');
+                return;
+            }
+            
             this.processing = true;
-
-            // ОДРАЗУ і агресивно знищити iframe
-            this.destroyIframeAggressively();
-
-            // Додати індикатор що платіж завершений
-            this.showCompletionMessage();
-
-            // Швидкий редірект
+            
+            console.log('BNA NEW: Waiting 3 seconds for iframe success display...');
             setTimeout(() => {
-                console.log('BNA: Redirecting to:', this.config.thankYouUrl);
-                // Використовуємо replace замість href для уникнення history
-                window.location.replace(this.config.thankYouUrl);
+                this.updateOrderStatus(paymentData);
+            }, 3000);
+        }
+
+        updateOrderStatus(paymentData) {
+            console.log('BNA NEW: Updating order status...');
+            
+            if (!window.bna_ajax) {
+                console.error('BNA NEW: AJAX config missing!');
+                this.showError();
+                return;
+            }
+            
+            const ajaxData = {
+                action: 'bna_complete_payment',
+                order_id: parseInt(this.config.orderId),
+                transaction_id: paymentData.id || '',
+                _ajax_nonce: window.bna_ajax.nonce
+            };
+            
+            console.log('BNA NEW: Sending request:', ajaxData);
+
+            $.post({
+                url: window.bna_ajax.ajax_url,
+                data: ajaxData,
+                timeout: 15000
+            })
+            .done((response) => {
+                console.log('BNA NEW: Success response:', response);
+                this.redirectToThankYou();
+            })
+            .fail((xhr, status, error) => {
+                console.error('BNA NEW: Request failed:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText
+                });
+                this.showError();
+            });
+        }
+
+        redirectToThankYou() {
+            console.log('BNA NEW: Redirecting to:', this.config.thankYouUrl);
+            setTimeout(() => {
+                window.location.href = this.config.thankYouUrl;
             }, 1000);
         }
 
-        destroyIframeAggressively() {
-            console.log('🔥 BNA: AGGRESSIVE IFRAME DESTRUCTION START');
-
-            // Знайти iframe знову на всякий випадок
-            this.iframe = this.iframe || document.getElementById('bna-payment-iframe');
-
-            if (this.iframe) {
-                console.log('🔥 Found iframe, destroying...');
-
-                try {
-                    // 1. Спочатку заблокувати всі події
-                    this.iframe.onload = null;
-                    this.iframe.onerror = null;
-
-                    // 2. Зупинити завантаження
-                    this.iframe.src = 'about:blank';
-                    console.log('🔥 Set src to about:blank');
-
-                    // 3. Сховати повністю
-                    this.iframe.style.cssText = 'display: none !important; visibility: hidden !important; position: absolute; left: -9999px; width: 0; height: 0;';
-                    console.log('🔥 Hidden iframe');
-
-                    // 4. Видалити атрибути
-                    this.iframe.removeAttribute('src');
-                    this.iframe.removeAttribute('srcdoc');
-                    console.log('🔥 Removed attributes');
-
-                    // 5. Замінити на пустий div
-                    const replacement = document.createElement('div');
-                    replacement.innerHTML = '<!-- BNA iframe removed -->';
-                    this.iframe.parentNode.replaceChild(replacement, this.iframe);
-                    console.log('🔥 Replaced with empty div');
-
-                    this.iframe = null;
-                    this.destroyed = true;
-
-                } catch (error) {
-                    console.error('🔥 Error destroying iframe:', error);
-                    // Якщо не вдається - просто сховати
-                    try {
-                        this.iframe.style.display = 'none';
-                        this.iframe.style.visibility = 'hidden';
-                    } catch (e) {
-                        console.error('🔥 Even hiding failed:', e);
-                    }
-                }
-            } else {
-                console.log('🔥 No iframe found to destroy');
-            }
-
-            // Знищити wrapper теж
-            const wrapper = document.getElementById('bna-iframe-wrapper');
-            if (wrapper) {
-                console.log('🔥 Destroying wrapper');
-                wrapper.innerHTML = '<div class="bna-destroyed">✓ Payment processing completed</div>';
-                wrapper.style.cssText = 'text-align: center; padding: 40px; background: #d4edda; border: 2px solid #28a745; border-radius: 8px;';
-            }
-
-            console.log('🔥 BNA: AGGRESSIVE IFRAME DESTRUCTION COMPLETE');
-        }
-
-        showCompletionMessage() {
-            // Додати глобальний індикатор
-            const indicator = document.createElement('div');
-            indicator.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #28a745;
-                color: white;
-                padding: 15px 25px;
-                border-radius: 5px;
-                font-weight: bold;
-                z-index: 999999;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            `;
-            indicator.innerHTML = '✓ Payment Completed!';
-            document.body.appendChild(indicator);
+        showError() {
+            this.showMessage('error', 'Payment was successful but order update failed. Please contact support.');
         }
 
         handlePaymentFailed(message) {
-            console.log('BNA: Payment failed:', message);
-            this.destroyIframeAggressively();
+            console.error('BNA NEW: Payment failed:', message);
+            this.showMessage('error', message);
             setTimeout(() => {
-                window.location.replace(this.config.checkoutUrl);
-            }, 2000);
+                window.location.href = this.config.checkoutUrl;
+            }, 3000);
         }
 
         handlePaymentError(message) {
             this.handlePaymentFailed('Payment error: ' + message);
         }
+
+        showMessage(type, message) {
+            if (!this.messageContainer) {
+                this.messageContainer = document.getElementById('bna-messages-container');
+            }
+
+            if (this.messageContainer) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `bna-message ${type}`;
+                messageDiv.innerHTML = `
+                    <span class="bna-message-icon"></span>
+                    <span class="bna-message-text">${message}</span>
+                `;
+                this.messageContainer.appendChild(messageDiv);
+            }
+        }
+
+        clearMessages() {
+            if (this.messageContainer) {
+                this.messageContainer.innerHTML = '';
+            }
+        }
     }
 
-    // Initialize
     window.bnaPaymentHandler = new BNAPaymentHandler();
-
+    
     $(document).ready(function() {
+        console.log('BNA NEW: DOM ready');
         if (window.bnaConfig) {
             window.bnaPaymentHandler.init();
-        }
-    });
-
-    // Додатковий захист - якщо щось пішло не так
-    window.addEventListener('beforeunload', function(e) {
-        if (window.bnaPaymentHandler && window.bnaPaymentHandler.destroyed) {
-            console.log('✅ BNA: Iframe destroyed, allowing navigation');
-            return undefined; // Не показувати попередження
-        }
-
-        if (window.bnaPaymentHandler && window.bnaPaymentHandler.processing) {
-            console.log('⚠️ BNA: Payment processing, but iframe not destroyed yet');
-            // Спробувати знищити ще раз
-            try {
-                window.bnaPaymentHandler.destroyIframeAggressively();
-            } catch (error) {
-                console.error('Failed emergency iframe destruction:', error);
-            }
         }
     });
 
