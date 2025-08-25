@@ -70,6 +70,23 @@ class BNA_Gateway_Plugin {
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_action_links'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
         add_action('init', array($this, 'init_listeners'));
+
+        // Force debug system initialization
+        add_action('admin_init', array($this, 'init_debug_system'));
+    }
+
+    /**
+     * Initialize debug system
+     */
+    public function init_debug_system() {
+        if (class_exists('BNA_Debug_Helper') && !did_action('bna_debug_initialized')) {
+            BNA_Debug_Helper::init(); // Додай цю строку
+            BNA_Debug_Helper::log('BNA Plugin debug system initialized', array(
+                'plugin_version' => BNA_GATEWAY_VERSION,
+                'wp_debug' => defined('WP_DEBUG') && WP_DEBUG
+            ));
+            do_action('bna_debug_initialized');
+        }
     }
 
     /**
@@ -135,7 +152,14 @@ class BNA_Gateway_Plugin {
      */
     public function init_listeners() {
         new BNA_Webhook_Listener();
+
+        // Initialize debug system
+        if (is_admin()) {
+            new BNA_Admin_Debug();
+            new BNA_Debug_Ajax_Handler();
+        }
     }
 }
 
 BNA_Gateway_Plugin::get_instance();
+

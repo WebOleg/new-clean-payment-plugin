@@ -231,7 +231,7 @@
             console.log('BNA: Redirecting to:', this.config.thankYouUrl);
             setTimeout(() => {
                 window.location.href = this.config.thankYouUrl;
-            }, 1000);
+            }, 10000);
         }
 
         /**

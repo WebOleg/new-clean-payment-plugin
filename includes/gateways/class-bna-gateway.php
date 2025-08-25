@@ -27,7 +27,7 @@ class BNA_Gateway extends WC_Payment_Gateway {
         $this->title = $this->get_option('title');
         $this->description = $this->get_option('description');
         $this->enabled = $this->get_option('enabled');
-        $this->mode = $this->get_option('mode', 'staging');
+        $this->mode = $this->get_option('mode', 'development');
         $this->iframe_id = $this->get_option('iframe_id');
         $this->access_key = $this->get_option('access_key');
         $this->secret_key = $this->get_option('secret_key');
@@ -65,11 +65,12 @@ class BNA_Gateway extends WC_Payment_Gateway {
             'mode' => array(
                 'title' => 'Mode',
                 'type' => 'select',
-                'description' => 'Select staging for testing, production for live payments.',
-                'default' => 'staging',
+                'description' => 'Select development for testing, staging for pre-production, production for live payments.',
+                'default' => 'development',
                 'desc_tip' => true,
                 'options' => array(
-                    'staging' => 'Staging (Test)',
+                    'development' => 'Development (Testing)',
+                    'staging' => 'Staging (Pre-production)',
                     'production' => 'Production (Live)'
                 ),
             ),
@@ -104,26 +105,45 @@ class BNA_Gateway extends WC_Payment_Gateway {
      * @return array
      */
     public function process_payment($order_id) {
+        BNA_Debug_Helper::log('PROCESS PAYMENT CALLED', array(
+            'order_id' => $order_id,
+            'method' => 'bna_gateway'
+        ), 'PAYMENT');
+
         $order = wc_get_order($order_id);
 
         if (!$order) {
+            BNA_Debug_Helper::log('ORDER NOT FOUND', array('order_id' => $order_id), 'ERROR');
             wc_add_notice('Order not found', 'error');
             return array('result' => 'failure');
         }
 
         if (!$this->validate_settings()) {
+            BNA_Debug_Helper::log('SETTINGS VALIDATION FAILED', array(), 'ERROR');
             return array('result' => 'failure');
         }
 
+        BNA_Debug_Helper::log('CREATING API CLIENT', array(), 'PAYMENT');
         $api_client = new BNA_Api_Helper($this->get_api_config());
+        
+        BNA_Debug_Helper::log('GETTING CHECKOUT TOKEN', array(), 'PAYMENT');
         $token = $api_client->get_checkout_token($order);
 
         if (!$token) {
+            BNA_Debug_Helper::log('TOKEN GENERATION FAILED', array(), 'ERROR');
             $this->handle_token_error();
             return array('result' => 'failure');
         }
 
+        BNA_Debug_Helper::log('TOKEN RECEIVED SUCCESSFULLY', array(
+            'token_length' => strlen($token)
+        ), 'PAYMENT');
+
         $this->store_order_data($order, $token);
+
+        BNA_Debug_Helper::log('REDIRECTING TO PAYMENT PAGE', array(
+            'redirect_url' => $order->get_checkout_payment_url(true)
+        ), 'PAYMENT');
 
         return array(
             'result' => 'success',
@@ -200,17 +220,32 @@ class BNA_Gateway extends WC_Payment_Gateway {
      * @param int $order_id
      */
     public function receipt_page($order_id) {
+        BNA_Debug_Helper::log('RECEIPT PAGE CALLED', array(
+            'order_id' => $order_id
+        ), 'PAYMENT');
+
         $order = wc_get_order($order_id);
         if (!$order) {
+            BNA_Debug_Helper::log('RECEIPT PAGE - ORDER NOT FOUND', array(
+                'order_id' => $order_id
+            ), 'ERROR');
             $this->render_error_template('Order not found. Please try again.');
             return;
         }
 
         $token = $order->get_meta('_bna_checkout_token');
         if (!$token) {
+            BNA_Debug_Helper::log('RECEIPT PAGE - TOKEN NOT FOUND', array(
+                'order_id' => $order_id
+            ), 'ERROR');
             $this->render_expired_template($order);
             return;
         }
+
+        BNA_Debug_Helper::log('RECEIPT PAGE - RENDERING IFRAME', array(
+            'order_id' => $order_id,
+            'token_length' => strlen($token)
+        ), 'PAYMENT');
 
         $renderer = new BNA_Iframe_Renderer($this->get_api_config(), $token, $order);
         $renderer->render();
