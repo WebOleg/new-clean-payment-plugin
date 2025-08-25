@@ -1,0 +1,264 @@
+/* BNA iFrame Payment Gateway Styles */
+
+.bna-payment-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bna-payment-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.bna-payment-description {
+    color: #666;
+    margin-bottom: 24px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.bna-iframe-wrapper {
+    position: relative;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 20px 0;
+    background: #f9f9f9;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.bna-payment-iframe {
+    display: block;
+    width: 100%;
+    min-height: 600px;
+    border: none;
+    transition: opacity 0.3s ease;
+    background: white;
+}
+
+.bna-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 10;
+    backdrop-filter: blur(2px);
+}
+
+.bna-loading-text {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+.bna-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2271b1;
+    border-radius: 50%;
+    animation: bna-spin 1s linear infinite;
+}
+
+@keyframes bna-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Status Messages */
+.bna-message {
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bna-message::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.bna-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.bna-message.success::before {
+    background: #28a745;
+}
+
+.bna-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.bna-message.error::before {
+    background: #dc3545;
+}
+
+.bna-message.processing {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.bna-message.processing::before {
+    background: #17a2b8;
+    animation: bna-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes bna-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Retry Button */
+.bna-retry-button {
+    display: inline-block;
+    background: #2271b1;
+    color: white;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.bna-retry-button:hover {
+    background: #135e96;
+    color: white;
+    text-decoration: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .bna-payment-container {
+        padding: 16px;
+        margin: 0;
+    }
+    
+    .bna-payment-iframe {
+        min-height: 500px;
+    }
+    
+    .bna-payment-title {
+        font-size: 20px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .bna-payment-container {
+        color: #e0e0e0;
+    }
+    
+    .bna-payment-title {
+        color: #f0f0f0;
+    }
+    
+    .bna-iframe-wrapper {
+        border-color: #555;
+        background: #2a2a2a;
+    }
+}
+
+/* Order Summary Styles */
+.bna-payment-details {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 20px 0;
+}
+
+.bna-order-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.bna-order-summary:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.bna-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.bna-amount {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 18px;
+}
+
+.bna-order, .bna-currency {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Hidden iframe state */
+.bna-iframe-wrapper.hidden {
+    display: none;
+}
+
+/* Completed state styles */
+.bna-payment-completed {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.bna-payment-completed h3 {
+    color: #28a745;
+    margin-bottom: 16px;
+    font-size: 24px;
+}
+
+.bna-payment-completed p {
+    color: #6c757d;
+    font-size: 16px;
+    margin-bottom: 24px;
+}
+
+/* Loading state improvements */
+.bna-loading-overlay.processing {
+    background: rgba(40, 167, 69, 0.95);
+}
+
+.bna-loading-overlay.processing .bna-loading-text {
+    color: white;
+}
+
+.bna-loading-overlay.processing .bna-spinner {
+    border-color: rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+}
