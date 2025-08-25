@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * BNA AJAX Handler - NO WC redirect at all
+ * BNA AJAX Handler - Simple like old plugin
  */
 class BNA_Ajax_Handler {
 
@@ -22,7 +22,7 @@ class BNA_Ajax_Handler {
 
     public function update_order_status() {
         $request_data = $this->validate_request();
-        
+
         if (!$request_data) {
             wp_send_json_error('Invalid request data');
             return;
@@ -47,7 +47,7 @@ class BNA_Ajax_Handler {
 
     public function manual_redirect() {
         $order_id = isset($_POST['order_id']) ? intval($_POST['order_id']) : 0;
-        
+
         if (!$order_id) {
             wp_send_json_error('Invalid order ID');
             return;
@@ -90,7 +90,7 @@ class BNA_Ajax_Handler {
 
         // Очищаємо корзину
         WC()->cart->empty_cart();
-        
+
         error_log('BNA: Order updated WITHOUT payment_complete()');
     }
 
