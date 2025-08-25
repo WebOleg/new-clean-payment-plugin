@@ -14,19 +14,23 @@ class BNA_Api_Helper {
 
     public function __construct($config) {
         $this->config = $config;
-        $this->api_url = ($config['mode'] === 'production') 
-            ? 'https://api.bnasmartpayment.com' 
+        $this->api_url = ($config['mode'] === 'production')
+            ? 'https://api.bnasmartpayment.com'
             : 'https://stage-api-service.bnasmartpayment.com';
     }
 
+    /**
+     * Get checkout token from BNA API
+     *
+     * @param WC_Order $order
+     * @return string|false
+     */
     public function get_checkout_token($order) {
         $email = $order->get_billing_email();
-        
-        // First try to find existing customer by email via API
+
         $customer_id = $this->find_customer_by_email($email);
-        
+
         if (!$customer_id) {
-            // Try stored customer ID as fallback
             $customer_id = $this->get_stored_customer_id($email);
         }
 
@@ -39,26 +43,23 @@ class BNA_Api_Helper {
         }
 
         $response = $this->make_api_request('/v1/checkout', $payload);
-        
+
         if (!$response) {
             return false;
         }
 
-        // Handle existing customer error - try to find customer via API
         if (($response['code'] === 400 || $response['code'] === 409) && !$customer_id) {
             if ($this->is_customer_exists_error($response['body'])) {
                 error_log('BNA: Customer exists error, searching for customer...');
-                
+
                 $found_customer_id = $this->find_customer_by_email($email);
                 if ($found_customer_id) {
                     error_log('BNA: Found existing customer via API: ' . $found_customer_id);
                     $this->store_customer_id($email, $found_customer_id);
-                    
-                    // Retry with found customer ID
+
                     $payload = $this->build_payload_with_customer_id($order, $found_customer_id);
                     $response = $this->make_api_request('/v1/checkout', $payload);
                 } else {
-                    // Last resort - try minimal payload
                     return $this->retry_with_minimal_data($order);
                 }
             }
@@ -70,13 +71,12 @@ class BNA_Api_Helper {
         }
 
         $data = json_decode($response['body'], true);
-        
+
         if (!isset($data['token'])) {
             error_log('BNA API: Token not found in response');
             return false;
         }
 
-        // Store customer ID if new customer was created
         if (!$customer_id && isset($data['customerId'])) {
             $this->store_customer_id($email, $data['customerId']);
         }
@@ -87,10 +87,13 @@ class BNA_Api_Helper {
 
     /**
      * Find customer by email using BNA API
+     *
+     * @param string $email
+     * @return string|false
      */
     private function find_customer_by_email($email) {
         error_log('BNA: Searching for customer by email: ' . $email);
-        
+
         $response = wp_remote_get($this->api_url . '/v1/customers?email=' . urlencode($email), array(
             'timeout' => 30,
             'headers' => array(
@@ -114,13 +117,12 @@ class BNA_Api_Helper {
         }
 
         $data = json_decode($response_body, true);
-        
+
         if (!$data || !isset($data['data']) || !is_array($data['data']) || empty($data['data'])) {
             error_log('BNA: No customers found for email: ' . $email);
             return false;
         }
 
-        // Return first matching customer ID from data array
         if (isset($data['data'][0]['id'])) {
             error_log('BNA: Found customer ID: ' . $data['data'][0]['id']);
             return $data['data'][0]['id'];
@@ -131,10 +133,13 @@ class BNA_Api_Helper {
 
     /**
      * Get customer details by ID
+     *
+     * @param string $customer_id
+     * @return array|false
      */
     private function get_customer_by_id($customer_id) {
         error_log('BNA: Getting customer details for ID: ' . $customer_id);
-        
+
         $response = wp_remote_get($this->api_url . '/v1/customers/' . $customer_id, array(
             'timeout' => 30,
             'headers' => array(
@@ -160,6 +165,13 @@ class BNA_Api_Helper {
         return json_decode($response_body, true);
     }
 
+    /**
+     * Make API request to BNA
+     *
+     * @param string $endpoint
+     * @param array $payload
+     * @return array|false
+     */
     private function make_api_request($endpoint, $payload) {
         error_log('BNA API Request: ' . $this->api_url . $endpoint);
         error_log('BNA API Payload: ' . json_encode($payload, JSON_PRETTY_PRINT));
@@ -190,6 +202,13 @@ class BNA_Api_Helper {
         );
     }
 
+    /**
+     * Build payload with customer ID
+     *
+     * @param WC_Order $order
+     * @param string $customer_id
+     * @return array
+     */
     private function build_payload_with_customer_id($order, $customer_id) {
         return array(
             'iframeId' => $this->config['iframe_id'],
@@ -199,6 +218,12 @@ class BNA_Api_Helper {
         );
     }
 
+    /**
+     * Build payload with customer info
+     *
+     * @param WC_Order $order
+     * @return array
+     */
     private function build_payload_with_customer_info($order) {
         return array(
             'iframeId' => $this->config['iframe_id'],
@@ -208,6 +233,12 @@ class BNA_Api_Helper {
         );
     }
 
+    /**
+     * Build customer info array
+     *
+     * @param WC_Order $order
+     * @return array
+     */
     private function build_customer_info($order) {
         return array(
             'email' => $order->get_billing_email(),
@@ -229,6 +260,12 @@ class BNA_Api_Helper {
         );
     }
 
+    /**
+     * Build order items array
+     *
+     * @param WC_Order $order
+     * @return array
+     */
     private function build_order_items($order) {
         return array(
             array(
@@ -241,9 +278,15 @@ class BNA_Api_Helper {
         );
     }
 
+    /**
+     * Retry with minimal data
+     *
+     * @param WC_Order $order
+     * @return string|false
+     */
     private function retry_with_minimal_data($order) {
         error_log('BNA: Retrying with minimal payload');
-        
+
         $payload = array(
             'iframeId' => $this->config['iframe_id'],
             'items' => $this->build_order_items($order),
@@ -251,7 +294,7 @@ class BNA_Api_Helper {
         );
 
         $response = $this->make_api_request('/v1/checkout', $payload);
-        
+
         if (!$response || $response['code'] !== 200) {
             return false;
         }
@@ -260,28 +303,51 @@ class BNA_Api_Helper {
         return isset($data['token']) ? $data['token'] : false;
     }
 
+    /**
+     * Check if error indicates customer already exists
+     *
+     * @param string $response_body
+     * @return bool
+     */
     private function is_customer_exists_error($response_body) {
         $data = json_decode($response_body, true);
         if (!$data || !isset($data['message'])) {
             return false;
         }
-        
+
         $message = strtolower($data['message']);
-        return strpos($message, 'already exists') !== false || 
-               strpos($message, 'duplicate') !== false ||
-               strpos($message, 'user already exists') !== false ||
-               strpos($message, 'customer already exists') !== false;
+        return strpos($message, 'already exists') !== false ||
+            strpos($message, 'duplicate') !== false ||
+            strpos($message, 'user already exists') !== false ||
+            strpos($message, 'customer already exists') !== false;
     }
 
+    /**
+     * Get stored customer ID
+     *
+     * @param string $email
+     * @return string|false
+     */
     private function get_stored_customer_id($email) {
         return get_option('bna_customer_' . md5($email), false);
     }
 
+    /**
+     * Store customer ID locally
+     *
+     * @param string $email
+     * @param string $customer_id
+     */
     private function store_customer_id($email, $customer_id) {
         update_option('bna_customer_' . md5($email), $customer_id, false);
         error_log('BNA: Stored customer ID for email: ' . $email . ' -> ' . $customer_id);
     }
 
+    /**
+     * Get API URL
+     *
+     * @return string
+     */
     public function get_api_url() {
         return $this->api_url;
     }

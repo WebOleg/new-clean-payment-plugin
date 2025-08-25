@@ -38,6 +38,9 @@ class BNA_Gateway extends WC_Payment_Gateway {
         add_action('woocommerce_receipt_' . $this->id, array($this, 'receipt_page'));
     }
 
+    /**
+     * Initialize form fields for admin settings
+     */
     public function init_form_fields() {
         $this->form_fields = array(
             'enabled' => array(
@@ -94,9 +97,15 @@ class BNA_Gateway extends WC_Payment_Gateway {
         );
     }
 
+    /**
+     * Process payment and redirect to BNA payment page
+     *
+     * @param int $order_id
+     * @return array
+     */
     public function process_payment($order_id) {
         $order = wc_get_order($order_id);
-        
+
         if (!$order) {
             wc_add_notice('Order not found', 'error');
             return array('result' => 'failure');
@@ -108,7 +117,7 @@ class BNA_Gateway extends WC_Payment_Gateway {
 
         $api_client = new BNA_Api_Helper($this->get_api_config());
         $token = $api_client->get_checkout_token($order);
-        
+
         if (!$token) {
             $this->handle_token_error();
             return array('result' => 'failure');
@@ -122,12 +131,17 @@ class BNA_Gateway extends WC_Payment_Gateway {
         );
     }
 
+    /**
+     * Validate plugin settings
+     *
+     * @return bool
+     */
     private function validate_settings() {
         if (empty($this->iframe_id)) {
             wc_add_notice('iFrame ID is not configured', 'error');
             return false;
         }
-        
+
         if (empty($this->access_key) || empty($this->secret_key)) {
             wc_add_notice('API credentials are not configured', 'error');
             return false;
@@ -136,6 +150,11 @@ class BNA_Gateway extends WC_Payment_Gateway {
         return true;
     }
 
+    /**
+     * Get API configuration array
+     *
+     * @return array
+     */
     private function get_api_config() {
         return array(
             'mode' => $this->mode,
@@ -153,6 +172,12 @@ class BNA_Gateway extends WC_Payment_Gateway {
         }
     }
 
+    /**
+     * Store order data for payment processing
+     *
+     * @param WC_Order $order
+     * @param string $token
+     */
     private function store_order_data($order, $token) {
         $order->update_meta_data('_bna_checkout_token', $token);
         $order->update_meta_data('_bna_payment_method', 'bna_gateway');
@@ -160,12 +185,20 @@ class BNA_Gateway extends WC_Payment_Gateway {
         $order->save();
     }
 
+    /**
+     * Display payment fields on checkout
+     */
     public function payment_fields() {
         if ($this->description) {
             echo wpautop(wptexturize($this->description));
         }
     }
 
+    /**
+     * Display payment page with iframe
+     *
+     * @param int $order_id
+     */
     public function receipt_page($order_id) {
         $order = wc_get_order($order_id);
         if (!$order) {
@@ -183,10 +216,20 @@ class BNA_Gateway extends WC_Payment_Gateway {
         $renderer->render();
     }
 
+    /**
+     * Render error message template
+     *
+     * @param string $message
+     */
     private function render_error_template($message) {
         include BNA_GATEWAY_PLUGIN_PATH . 'templates/error-message.php';
     }
 
+    /**
+     * Render session expired template
+     *
+     * @param WC_Order $order
+     */
     private function render_expired_template($order) {
         $retry_url = $order->get_checkout_payment_url();
         include BNA_GATEWAY_PLUGIN_PATH . 'templates/session-expired.php';

@@ -1,4 +1,214 @@
-/* Additional styles for optimized iframe handling */
+/* BNA Payment Gateway Styles */
+
+/* Payment Container */
+.bna-payment-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.bna-payment-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 16px;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.bna-payment-description {
+    text-align: center;
+    color: #666;
+    margin-bottom: 24px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Payment Details */
+.bna-payment-details {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: space-between;
+}
+
+.bna-order-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 140px;
+}
+
+.bna-label {
+    font-weight: 500;
+    color: #666;
+}
+
+.bna-amount,
+.bna-order,
+.bna-currency {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Iframe Wrapper */
+.bna-iframe-wrapper {
+    position: relative;
+    background: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.bna-payment-iframe {
+    width: 100%;
+    min-height: 500px;
+    max-height: 500px;
+    border: none;
+    display: block;
+}
+
+/* Loading Overlay */
+.bna-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.bna-loading-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 16px;
+}
+
+.bna-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e3e3e3;
+    border-top: 4px solid #2271b1;
+    border-radius: 50%;
+    animation: bna-spin 1s linear infinite;
+}
+
+@keyframes bna-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Messages Container */
+.bna-messages-container {
+    margin-top: 20px;
+}
+
+.bna-message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.bna-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.bna-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.bna-message.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.bna-message.processing {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.bna-message-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.bna-message.success .bna-message-icon {
+    background: #28a745;
+}
+
+.bna-message.error .bna-message-icon {
+    background: #dc3545;
+}
+
+.bna-message.info .bna-message-icon {
+    background: #17a2b8;
+}
+
+.bna-message.processing .bna-message-icon {
+    background: #ffc107;
+}
+
+/* Security Notice */
+.bna-security-notice {
+    margin-top: 20px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #6c757d;
+    text-align: center;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.bna-security-notice:hover {
+    opacity: 1;
+}
+
+/* Processing States */
+.bna-payment-container.processing {
+    pointer-events: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.bna-payment-container.processing .bna-payment-iframe {
+    filter: blur(1px);
+    opacity: 0.8;
+    transition: filter 0.5s ease, opacity 0.5s ease;
+}
+
+.bna-payment-container.processing * {
+    cursor: wait !important;
+}
 
 /* Frozen iframe state */
 .bna-iframe-wrapper.frozen {
@@ -8,94 +218,6 @@
 .bna-iframe-wrapper.frozen .bna-payment-iframe {
     opacity: 0.7;
     transition: opacity 0.5s ease;
-}
-
-/* Completion overlay */
-.bna-completion-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.95);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    font-size: 18px;
-    font-weight: bold;
-    color: #28a745;
-    backdrop-filter: blur(2px);
-}
-
-.bna-completion-overlay .success-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    animation: bna-success-pulse 2s ease-in-out infinite;
-}
-
-@keyframes bna-success-pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.1);
-        opacity: 0.8;
-    }
-}
-
-/* Enhanced payment completed state */
-.bna-payment-completed {
-    text-align: center;
-    padding: 60px 20px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 12px;
-    margin: 20px 0;
-    border: 2px solid #28a745;
-}
-
-.bna-payment-completed h3 {
-    color: #28a745;
-    margin-bottom: 16px;
-    font-size: 28px;
-    font-weight: 700;
-}
-
-.bna-payment-completed .success-checkmark {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: #28a745;
-    margin: 0 auto 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 40px;
-    animation: bna-checkmark-appear 0.6s ease-out;
-}
-
-@keyframes bna-checkmark-appear {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.2);
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-.bna-payment-completed p {
-    color: #6c757d;
-    font-size: 16px;
-    margin-bottom: 24px;
-    font-weight: 500;
 }
 
 /* Enhanced loading states */
@@ -116,126 +238,113 @@
     height: 50px;
 }
 
-/* Progress indicator */
-.bna-progress-steps {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-    margin: 20px 0;
-}
-
-.bna-progress-step {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #dee2e6;
-    transition: background-color 0.3s ease;
-}
-
-.bna-progress-step.active {
+/* Error Templates Styles */
+.bna-retry-button {
+    display: inline-block;
+    padding: 12px 24px;
     background: #2271b1;
-    animation: bna-pulse-step 1.5s ease-in-out infinite;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background 0.3s ease;
 }
 
-.bna-progress-step.completed {
-    background: #28a745;
+.bna-retry-button:hover {
+    background: #1e5d8b;
+    color: white;
+    text-decoration: none;
 }
 
-@keyframes bna-pulse-step {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.3);
-        opacity: 0.7;
-    }
+.bna-error-actions {
+    margin-top: 20px;
+    text-align: center;
 }
 
-/* Prevent text selection during processing */
-.bna-payment-container.processing {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+.bna-session-info {
+    margin: 20px 0;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    color: #666;
 }
 
-.bna-payment-container.processing * {
-    cursor: wait !important;
+.bna-session-info h4 {
+    color: #333;
+    margin-bottom: 12px;
+    font-size: 16px;
 }
 
-/* Enhanced responsive design */
+.bna-session-info ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.bna-session-info li {
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-    .bna-completion-overlay {
-        font-size: 16px;
+    .bna-payment-container {
+        padding: 16px;
+        margin: 10px;
     }
 
-    .bna-completion-overlay .success-icon {
-        font-size: 36px;
-        margin-bottom: 12px;
+    .bna-payment-title {
+        font-size: 20px;
     }
 
-    .bna-payment-completed {
-        padding: 40px 16px;
+    .bna-payment-description {
+        font-size: 14px;
     }
 
-    .bna-payment-completed h3 {
-        font-size: 24px;
+    .bna-payment-details {
+        flex-direction: column;
+        gap: 12px;
     }
 
-    .bna-payment-completed .success-checkmark {
-        width: 60px;
-        height: 60px;
-        font-size: 30px;
+    .bna-order-summary {
+        justify-content: space-between;
+    }
+
+    .bna-payment-iframe {
+        min-height: 400px !important;
+        max-height: 400px;
     }
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-    .bna-completion-overlay {
-        background: rgba(255, 255, 255, 0.98);
-        border: 2px solid #28a745;
+    .bna-payment-container {
+        border: 2px solid #333;
     }
 
-    .bna-payment-completed {
-        border-width: 3px;
+    .bna-message {
+        border-width: 2px;
     }
 }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-    .bna-completion-overlay .success-icon,
-    .bna-success-pulse,
-    .bna-checkmark-appear,
-    .bna-pulse-step {
+    .bna-spin {
         animation: none;
     }
 
-    .bna-payment-iframe {
+    .bna-payment-iframe,
+    .bna-retry-button,
+    .bna-security-notice {
         transition: none;
     }
 }
-/* Приховати індикатори завантаження в iframe */
-.bna-payment-iframe {
-    min-height: 500px !important; /* Зменшений розмір */
-    max-height: 500px;
-}
 
-/* Приховати індикатори завантаження */
+/* Hide unwanted loading indicators */
 .loading-dots,
 .loader,
 .progress-indicator,
 .progress-dots,
-[class*="loading"],
-[class*="progress"] {
+[class*="loading"]:not(.bna-loading-overlay):not(.bna-loading-text),
+[class*="progress"]:not(.bna-progress) {
     display: none !important;
-}
-
-/* Для мобільних */
-@media (max-width: 768px) {
-    .bna-payment-iframe {
-        min-height: 400px !important;
-        max-height: 400px;
-    }
 }
