@@ -6,46 +6,14 @@ if (!defined('ABSPATH')) {
 
 /**
  * BNA Configuration Manager
- *
- * Centralized configuration management for BNA Gateway plugin.
- * Handles all plugin settings, validation, and dynamic configuration.
- * Supports dev/staging/production environments.
  */
 class BNA_Config_Manager {
 
-    /**
-     * Gateway instance
-     *
-     * @var BNA_Gateway
-     */
     private $gateway;
-
-    /**
-     * API endpoints configuration
-     *
-     * @var array
-     */
     private $api_endpoints;
-
-    /**
-     * Default configuration values
-     *
-     * @var array
-     */
     private $defaults;
-
-    /**
-     * Configuration sections
-     *
-     * @var array
-     */
     private $sections;
 
-    /**
-     * Constructor
-     *
-     * @param BNA_Gateway $gateway Gateway instance
-     */
     public function __construct($gateway = null) {
         $this->gateway = $gateway;
         $this->init_api_endpoints();
@@ -55,8 +23,6 @@ class BNA_Config_Manager {
 
     /**
      * Initialize API endpoints for different environments
-     *
-     * @return void
      */
     private function init_api_endpoints() {
         $this->api_endpoints = array(
@@ -68,40 +34,27 @@ class BNA_Config_Manager {
 
     /**
      * Initialize default configuration values
-     *
-     * @return void
      */
     private function init_defaults() {
         $this->defaults = array(
-            // Basic settings
             'enabled' => 'no',
             'title' => 'BNA Smart Payment',
             'description' => 'Pay securely using BNA Smart Payment system.',
             'mode' => 'development',
-
-            // API Configuration
             'iframe_id' => '',
             'access_key' => '',
             'secret_key' => '',
-
-            // Payment setup
             'recurring_enabled' => 'no',
             'apply_fees' => 'no',
             'currency' => 'CAD',
-
-            // Customer details collection
             'collect_phone' => 'no',
             'collect_billing_address' => 'yes',
             'collect_shipping_address' => 'no',
             'collect_birthdate' => 'no',
-
-            // Payment methods
             'payment_methods' => array('card', 'e_transfer', 'eft'),
             'card_enabled' => 'yes',
             'e_transfer_enabled' => 'yes',
             'eft_enabled' => 'yes',
-
-            // Advanced options
             'show_cart_details' => 'no',
             'allow_new_customers' => 'yes',
             'allow_business_customers' => 'no',
@@ -113,8 +66,6 @@ class BNA_Config_Manager {
 
     /**
      * Initialize configuration sections
-     *
-     * @return void
      */
     private function init_sections() {
         $this->sections = array(
@@ -147,9 +98,6 @@ class BNA_Config_Manager {
 
     /**
      * Get API URL for current mode
-     *
-     * @param string $mode Environment mode (development/staging/production)
-     * @return string API URL
      */
     public function get_api_url($mode = null) {
         if (null === $mode && $this->gateway) {
@@ -157,7 +105,6 @@ class BNA_Config_Manager {
         }
 
         if (!isset($this->api_endpoints[$mode])) {
-            error_log('BNA Config: Invalid mode "' . $mode . '", falling back to development');
             $mode = 'development';
         }
 
@@ -166,8 +113,6 @@ class BNA_Config_Manager {
 
     /**
      * Get all API endpoints
-     *
-     * @return array API endpoints
      */
     public function get_api_endpoints() {
         return $this->api_endpoints;
@@ -175,9 +120,6 @@ class BNA_Config_Manager {
 
     /**
      * Get default value for setting
-     *
-     * @param string $key Setting key
-     * @return mixed Default value
      */
     public function get_default($key) {
         return isset($this->defaults[$key]) ? $this->defaults[$key] : null;
@@ -185,8 +127,6 @@ class BNA_Config_Manager {
 
     /**
      * Get all default values
-     *
-     * @return array Default values
      */
     public function get_defaults() {
         return $this->defaults;
@@ -194,8 +134,6 @@ class BNA_Config_Manager {
 
     /**
      * Get configuration sections
-     *
-     * @return array Configuration sections
      */
     public function get_sections() {
         return $this->sections;
@@ -203,9 +141,6 @@ class BNA_Config_Manager {
 
     /**
      * Get fields for specific section
-     *
-     * @param string $section Section name
-     * @return array Section fields
      */
     public function get_section_fields($section) {
         return isset($this->sections[$section]['fields']) ? $this->sections[$section]['fields'] : array();
@@ -213,9 +148,6 @@ class BNA_Config_Manager {
 
     /**
      * Validate mode value
-     *
-     * @param string $mode Mode to validate
-     * @return bool Is valid mode
      */
     public function is_valid_mode($mode) {
         return isset($this->api_endpoints[$mode]);
@@ -223,8 +155,6 @@ class BNA_Config_Manager {
 
     /**
      * Get available modes for form options
-     *
-     * @return array Mode options for forms
      */
     public function get_mode_options() {
         return array(
@@ -236,8 +166,6 @@ class BNA_Config_Manager {
 
     /**
      * Check if current mode is production
-     *
-     * @return bool Is production mode
      */
     public function is_production() {
         $mode = $this->gateway ? $this->gateway->get_option('mode', 'development') : 'development';
@@ -246,8 +174,6 @@ class BNA_Config_Manager {
 
     /**
      * Check if current mode is development
-     *
-     * @return bool Is development mode
      */
     public function is_development() {
         $mode = $this->gateway ? $this->gateway->get_option('mode', 'development') : 'development';
@@ -256,9 +182,6 @@ class BNA_Config_Manager {
 
     /**
      * Get environment label for display
-     *
-     * @param string $mode Mode to get label for
-     * @return string Environment label
      */
     public function get_mode_label($mode = null) {
         if (null === $mode && $this->gateway) {

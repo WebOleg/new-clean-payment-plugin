@@ -21,22 +21,15 @@
             this.iframe = document.getElementById('bna-payment-iframe');
             this.messageContainer = document.getElementById('bna-messages-container');
 
-            console.log('BNA: Config:', this.config);
-            console.log('BNA: AJAX:', window.bna_ajax);
-
             if (!this.config.orderId) {
-                console.error('BNA: Order ID not found');
                 return;
             }
 
             this.bindEvents();
-            console.log('BNA: Payment Handler initialized for order:', this.config.orderId);
         }
 
         /**
          * Initialize HTML templates
-         *
-         * @return object
          */
         initTemplates() {
             return {
@@ -65,7 +58,6 @@
          * Handle iframe load event
          */
         onIframeLoad() {
-            console.log('BNA: Iframe loaded');
             this.clearMessages();
         }
 
@@ -73,31 +65,24 @@
          * Handle iframe error event
          */
         onIframeError() {
-            console.error('BNA: Iframe failed to load');
             this.showMessage('error', 'Payment form failed to load.');
         }
 
         /**
          * Handle post messages from iframe
-         *
-         * @param {MessageEvent} event
          */
         handlePostMessage(event) {
             if (this.config.apiOrigin && event.origin !== this.config.apiOrigin) {
-                console.log('BNA: Ignoring message from', event.origin);
                 return;
             }
 
             const data = event.data;
-            console.log('BNA: Received message:', data);
 
             if (!data || !data.type) {
-                console.log('BNA: Invalid message data');
                 return;
             }
 
             if (this.processing) {
-                console.log('BNA: Already processing, ignoring duplicate message');
                 return;
             }
 
@@ -111,28 +96,20 @@
                 case 'payment_error':
                     this.handlePaymentError(data.message || 'Payment error occurred');
                     break;
-                default:
-                    console.log('BNA: Unknown message type:', data.type);
             }
         }
 
         /**
          * Handle successful payment
-         *
-         * @param {object} paymentData
          */
         handlePaymentSuccess(paymentData) {
-            console.log('BNA: SUCCESS! Transaction ID:', paymentData.id);
-
             if (this.processing) {
-                console.log('BNA: Duplicate success - ignoring');
                 return;
             }
 
             this.processing = true;
             this.showProcessingState();
 
-            console.log('BNA: Waiting 3 seconds for iframe success display...');
             setTimeout(() => {
                 this.updateOrderStatus(paymentData);
             }, 3000);
@@ -152,8 +129,6 @@
 
         /**
          * Show loading overlay
-         *
-         * @param {string} message
          */
         showLoadingOverlay(message) {
             const overlay = document.getElementById('bna-loading-overlay');
@@ -175,14 +150,9 @@
 
         /**
          * Update order status via AJAX
-         *
-         * @param {object} paymentData
          */
         updateOrderStatus(paymentData) {
-            console.log('BNA: Updating order status...');
-
             if (!window.bna_ajax) {
-                console.error('BNA: AJAX config missing!');
                 this.showError();
                 return;
             }
@@ -194,24 +164,16 @@
                 _ajax_nonce: window.bna_ajax.nonce
             };
 
-            console.log('BNA: Sending request:', ajaxData);
-
             $.post({
                 url: window.bna_ajax.ajax_url,
                 data: ajaxData,
                 timeout: 15000
             })
                 .done((response) => {
-                    console.log('BNA: Success response:', response);
                     this.showSuccessState();
                     this.redirectToThankYou();
                 })
                 .fail((xhr, status, error) => {
-                    console.error('BNA: Request failed:', {
-                        status: xhr.status,
-                        statusText: xhr.statusText,
-                        responseText: xhr.responseText
-                    });
                     this.showError();
                 });
         }
@@ -228,7 +190,6 @@
          * Redirect to thank you page
          */
         redirectToThankYou() {
-            console.log('BNA: Redirecting to:', this.config.thankYouUrl);
             setTimeout(() => {
                 window.location.href = this.config.thankYouUrl;
             }, 10000);
@@ -244,11 +205,8 @@
 
         /**
          * Handle payment failure
-         *
-         * @param {string} message
          */
         handlePaymentFailed(message) {
-            console.error('BNA: Payment failed:', message);
             this.showMessage('error', message);
             setTimeout(() => {
                 window.location.href = this.config.checkoutUrl;
@@ -257,8 +215,6 @@
 
         /**
          * Handle payment error
-         *
-         * @param {string} message
          */
         handlePaymentError(message) {
             this.handlePaymentFailed('Payment error: ' + message);
@@ -266,10 +222,6 @@
 
         /**
          * Show message in container
-         *
-         * @param {string} type
-         * @param {string} message
-         * @param {boolean} showIcon
          */
         showMessage(type, message, showIcon = true) {
             if (!this.messageContainer) {
@@ -298,7 +250,6 @@
 
     // Initialize on DOM ready
     $(document).ready(function() {
-        console.log('BNA: DOM ready');
         if (window.bnaConfig) {
             window.bnaPaymentHandler.init();
         }

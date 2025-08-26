@@ -56,9 +56,6 @@ class BNA_Webhook_Listener {
         $input = file_get_contents('php://input');
         $headers = $this->get_request_headers();
 
-        error_log('BNA Webhook received: ' . $input);
-        error_log('BNA Webhook headers: ' . json_encode($headers));
-
         if (empty($input)) {
             $this->send_response(400, 'Empty payload');
             return;
@@ -81,16 +78,12 @@ class BNA_Webhook_Listener {
 
     /**
      * Validate webhook data structure
-     *
-     * @param array $data
-     * @return bool
      */
     private function validate_webhook_data($data) {
         $required_fields = array('id', 'status', 'referenceUUID');
 
         foreach ($required_fields as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
-                error_log('BNA Webhook: Missing field ' . $field);
                 return false;
             }
         }
@@ -100,18 +93,13 @@ class BNA_Webhook_Listener {
 
     /**
      * Process webhook data
-     *
-     * @param array $data
      */
     private function process_webhook($data) {
         $order = $this->find_order_by_reference($data['referenceUUID']);
 
         if (!$order) {
-            error_log('BNA Webhook: Order not found for reference ' . $data['referenceUUID']);
             return;
         }
-
-        error_log('BNA Webhook: Processing for order ' . $order->get_id());
 
         switch (strtolower($data['status'])) {
             case 'approved':
@@ -128,17 +116,11 @@ class BNA_Webhook_Listener {
             case 'canceled':
                 $this->handle_webhook_cancellation($order, $data);
                 break;
-
-            default:
-                error_log('BNA Webhook: Unknown status ' . $data['status']);
         }
     }
 
     /**
      * Find order by reference UUID
-     *
-     * @param string $reference_uuid
-     * @return WC_Order|null
      */
     private function find_order_by_reference($reference_uuid) {
         $orders = wc_get_orders(array(
@@ -162,9 +144,6 @@ class BNA_Webhook_Listener {
 
     /**
      * Handle successful payment webhook
-     *
-     * @param WC_Order $order
-     * @param array $data
      */
     private function handle_webhook_success($order, $data) {
         if ($order->has_status(array('completed', 'processing'))) {
@@ -173,40 +152,26 @@ class BNA_Webhook_Listener {
 
         $order->payment_complete($data['id']);
         $order->add_order_note('Payment confirmed via BNA webhook. Transaction ID: ' . $data['id']);
-
-        error_log('BNA Webhook: Payment completed for order ' . $order->get_id());
     }
 
     /**
      * Handle failed payment webhook
-     *
-     * @param WC_Order $order
-     * @param array $data
      */
     private function handle_webhook_failure($order, $data) {
         $message = isset($data['message']) ? $data['message'] : 'Payment failed';
         $order->update_status('failed', 'Payment failed via webhook: ' . $message);
-
-        error_log('BNA Webhook: Payment failed for order ' . $order->get_id());
     }
 
     /**
      * Handle cancelled payment webhook
-     *
-     * @param WC_Order $order
-     * @param array $data
      */
     private function handle_webhook_cancellation($order, $data) {
         $message = isset($data['message']) ? $data['message'] : 'Payment cancelled';
         $order->update_status('cancelled', 'Payment cancelled via webhook: ' . $message);
-
-        error_log('BNA Webhook: Payment cancelled for order ' . $order->get_id());
     }
 
     /**
      * Get all request headers
-     *
-     * @return array
      */
     private function get_request_headers() {
         $headers = array();
@@ -227,9 +192,6 @@ class BNA_Webhook_Listener {
 
     /**
      * Send HTTP response
-     *
-     * @param int $code
-     * @param string $message
      */
     private function send_response($code, $message) {
         http_response_code($code);

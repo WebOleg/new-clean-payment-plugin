@@ -338,13 +338,3 @@
         transition: none;
     }
 }
-
-/* Hide unwanted loading indicators */
-.loading-dots,
-.loader,
-.progress-indicator,
-.progress-dots,
-[class*="loading"]:not(.bna-loading-overlay):not(.bna-loading-text),
-[class*="progress"]:not(.bna-progress) {
-    display: none !important;
-}

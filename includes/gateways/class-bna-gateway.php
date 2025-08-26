@@ -100,50 +100,28 @@ class BNA_Gateway extends WC_Payment_Gateway {
 
     /**
      * Process payment and redirect to BNA payment page
-     *
-     * @param int $order_id
-     * @return array
      */
     public function process_payment($order_id) {
-        BNA_Debug_Helper::log('PROCESS PAYMENT CALLED', array(
-            'order_id' => $order_id,
-            'method' => 'bna_gateway'
-        ), 'PAYMENT');
-
         $order = wc_get_order($order_id);
 
         if (!$order) {
-            BNA_Debug_Helper::log('ORDER NOT FOUND', array('order_id' => $order_id), 'ERROR');
             wc_add_notice('Order not found', 'error');
             return array('result' => 'failure');
         }
 
         if (!$this->validate_settings()) {
-            BNA_Debug_Helper::log('SETTINGS VALIDATION FAILED', array(), 'ERROR');
             return array('result' => 'failure');
         }
 
-        BNA_Debug_Helper::log('CREATING API CLIENT', array(), 'PAYMENT');
         $api_client = new BNA_Api_Helper($this->get_api_config());
-        
-        BNA_Debug_Helper::log('GETTING CHECKOUT TOKEN', array(), 'PAYMENT');
         $token = $api_client->get_checkout_token($order);
 
         if (!$token) {
-            BNA_Debug_Helper::log('TOKEN GENERATION FAILED', array(), 'ERROR');
             $this->handle_token_error();
             return array('result' => 'failure');
         }
 
-        BNA_Debug_Helper::log('TOKEN RECEIVED SUCCESSFULLY', array(
-            'token_length' => strlen($token)
-        ), 'PAYMENT');
-
         $this->store_order_data($order, $token);
-
-        BNA_Debug_Helper::log('REDIRECTING TO PAYMENT PAGE', array(
-            'redirect_url' => $order->get_checkout_payment_url(true)
-        ), 'PAYMENT');
 
         return array(
             'result' => 'success',
@@ -153,8 +131,6 @@ class BNA_Gateway extends WC_Payment_Gateway {
 
     /**
      * Validate plugin settings
-     *
-     * @return bool
      */
     private function validate_settings() {
         if (empty($this->iframe_id)) {
@@ -172,8 +148,6 @@ class BNA_Gateway extends WC_Payment_Gateway {
 
     /**
      * Get API configuration array
-     *
-     * @return array
      */
     private function get_api_config() {
         return array(
@@ -194,9 +168,6 @@ class BNA_Gateway extends WC_Payment_Gateway {
 
     /**
      * Store order data for payment processing
-     *
-     * @param WC_Order $order
-     * @param string $token
      */
     private function store_order_data($order, $token) {
         $order->update_meta_data('_bna_checkout_token', $token);
@@ -216,36 +187,19 @@ class BNA_Gateway extends WC_Payment_Gateway {
 
     /**
      * Display payment page with iframe
-     *
-     * @param int $order_id
      */
     public function receipt_page($order_id) {
-        BNA_Debug_Helper::log('RECEIPT PAGE CALLED', array(
-            'order_id' => $order_id
-        ), 'PAYMENT');
-
         $order = wc_get_order($order_id);
         if (!$order) {
-            BNA_Debug_Helper::log('RECEIPT PAGE - ORDER NOT FOUND', array(
-                'order_id' => $order_id
-            ), 'ERROR');
             $this->render_error_template('Order not found. Please try again.');
             return;
         }
 
         $token = $order->get_meta('_bna_checkout_token');
         if (!$token) {
-            BNA_Debug_Helper::log('RECEIPT PAGE - TOKEN NOT FOUND', array(
-                'order_id' => $order_id
-            ), 'ERROR');
             $this->render_expired_template($order);
             return;
         }
-
-        BNA_Debug_Helper::log('RECEIPT PAGE - RENDERING IFRAME', array(
-            'order_id' => $order_id,
-            'token_length' => strlen($token)
-        ), 'PAYMENT');
 
         $renderer = new BNA_Iframe_Renderer($this->get_api_config(), $token, $order);
         $renderer->render();
@@ -253,8 +207,6 @@ class BNA_Gateway extends WC_Payment_Gateway {
 
     /**
      * Render error message template
-     *
-     * @param string $message
      */
     private function render_error_template($message) {
         include BNA_GATEWAY_PLUGIN_PATH . 'templates/error-message.php';
@@ -262,8 +214,6 @@ class BNA_Gateway extends WC_Payment_Gateway {
 
     /**
      * Render session expired template
-     *
-     * @param WC_Order $order
      */
     private function render_expired_template($order) {
         $retry_url = $order->get_checkout_payment_url();

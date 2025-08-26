@@ -35,8 +35,6 @@ class BNA_Iframe_Renderer {
 
     /**
      * Prepare data for template
-     *
-     * @return array
      */
     private function prepare_template_data() {
         $iframe_url = $this->api_url . '/v1/checkout/' . $this->token;
@@ -60,10 +58,6 @@ class BNA_Iframe_Renderer {
 
     /**
      * Render status message
-     *
-     * @param string $type
-     * @param string $message
-     * @param bool $show_icon
      */
     public static function render_message($type, $message, $show_icon = true) {
         $template_data = array(
