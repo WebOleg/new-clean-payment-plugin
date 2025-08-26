@@ -42,9 +42,6 @@ class BNA_Gateway_Plugin {
 
     private static $instance = null;
 
-    /**
-     * Get singleton instance
-     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -67,36 +64,36 @@ class BNA_Gateway_Plugin {
         add_filter('woocommerce_payment_gateways', array($this, 'add_gateway_class'));
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_action_links'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
-        add_action('init', array($this, 'init_listeners'));
+        add_action('init', array($this, 'init_components'));
+        add_action('admin_init', array($this, 'init_debug_system'));
     }
 
-    /**
-     * Initialize gateway components
-     */
+    public function init_debug_system() {
+        if (class_exists('BNA_Debug_Helper') && !did_action('bna_debug_initialized')) {
+            BNA_Debug_Helper::init();
+            BNA_Debug_Helper::log('BNA Plugin debug system initialized', array(
+                'plugin_version' => BNA_GATEWAY_VERSION,
+                'wp_debug' => defined('WP_DEBUG') && WP_DEBUG
+            ));
+            do_action('bna_debug_initialized');
+        }
+    }
+
     public function init_gateway() {
         new BNA_Ajax_Handler();
     }
 
-    /**
-     * Add gateway class to WooCommerce
-     */
     public function add_gateway_class($gateways) {
         $gateways[] = 'BNA_Gateway';
         return $gateways;
     }
 
-    /**
-     * Add settings link to plugin actions
-     */
     public function plugin_action_links($links) {
         $settings_link = '<a href="' . admin_url('admin.php?page=wc-settings&tab=checkout&section=bna_gateway') . '">Settings</a>';
         array_unshift($links, $settings_link);
         return $links;
     }
 
-    /**
-     * Enqueue plugin assets
-     */
     public function enqueue_assets() {
         if (is_checkout() || is_wc_endpoint_url('order-pay')) {
             wp_enqueue_style(
@@ -122,11 +119,33 @@ class BNA_Gateway_Plugin {
         }
     }
 
-    /**
-     * Initialize webhook listeners
-     */
-    public function init_listeners() {
+    public function init_components() {
+        // Core listeners
         new BNA_Webhook_Listener();
+
+        // Simple logging
+        if (class_exists('BNA_Simple_Logger')) {
+            BNA_Simple_Logger::init();
+        }
+
+        // Admin interfaces (only in admin)
+        if (is_admin()) {
+            if (class_exists('BNA_Admin_Debug')) {
+                new BNA_Admin_Debug();
+            }
+            
+            if (class_exists('BNA_Debug_Ajax_Handler')) {
+                new BNA_Debug_Ajax_Handler();
+            }
+            
+            if (class_exists('BNA_Portal_Test_Page')) {
+                new BNA_Portal_Test_Page();
+            }
+            
+            if (class_exists('BNA_Simple_Admin')) {
+                new BNA_Simple_Admin();
+            }
+        }
     }
 }
 

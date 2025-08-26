@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * BNA Gateway Autoloader
+ * BNA Gateway Autoloader - Simplified Version
  */
 class BNA_Autoloader {
 
@@ -17,9 +17,6 @@ class BNA_Autoloader {
         $this->base_dir = BNA_GATEWAY_PLUGIN_PATH . 'includes/';
     }
 
-    /**
-     * Get singleton instance
-     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -27,16 +24,10 @@ class BNA_Autoloader {
         return self::$instance;
     }
 
-    /**
-     * Register autoloader
-     */
     public function register() {
         spl_autoload_register(array($this, 'autoload'));
     }
 
-    /**
-     * Autoload class files
-     */
     public function autoload($class_name) {
         if (strpos($class_name, $this->namespace_prefix) !== 0) {
             return;
@@ -49,9 +40,6 @@ class BNA_Autoloader {
         }
     }
 
-    /**
-     * Get file path for class
-     */
     private function get_file_path($class_name) {
         $class_map = $this->get_direct_class_map();
 
@@ -59,53 +47,41 @@ class BNA_Autoloader {
             return $this->base_dir . $class_map[$class_name];
         }
 
-        return $this->get_file_path_by_pattern($class_name);
+        return false;
     }
 
-    /**
-     * Get direct class mapping
-     */
     private function get_direct_class_map() {
         return array(
+            // Core Gateway
             'BNA_Gateway' => 'gateways/class-bna-gateway.php',
+
+            // Handlers
             'BNA_Ajax_Handler' => 'handlers/class-bna-ajax-handler.php',
+            'BNA_Debug_Ajax_Handler' => 'handlers/class-bna-debug-ajax-handler.php',
+
+            // Renderers
             'BNA_Iframe_Renderer' => 'renderers/class-bna-iframe-renderer.php',
+
+            // Helpers
             'BNA_Api_Helper' => 'helpers/class-bna-api-helper.php',
+            'BNA_Debug_Helper' => 'helpers/class-bna-debug-helper.php',
+
+            // Listeners
             'BNA_Webhook_Listener' => 'listeners/class-bna-webhook-listener.php',
+
+            // Managers
             'BNA_Config_Manager' => 'managers/class-bna-config-manager.php',
+
+            // Testers
+            'BNA_Portal_Tester' => 'testers/class-bna-portal-tester.php',
+
+            // Admin Interface
+            'BNA_Admin_Debug' => 'admin/class-bna-admin-debug.php',
+            'BNA_Portal_Test_Page' => 'admin/class-bna-portal-test-page.php',
+
+            // Simple Logging
+            'BNA_Simple_Logger' => 'logging/class-bna-simple-logger.php',
+            'BNA_Simple_Admin' => 'admin/class-bna-simple-admin.php',
         );
-    }
-
-    /**
-     * Get file path by pattern matching
-     */
-    private function get_file_path_by_pattern($class_name) {
-        $class_without_prefix = substr($class_name, strlen($this->namespace_prefix));
-        $filename = 'class-' . strtolower(str_replace('_', '-', $class_name)) . '.php';
-
-        $directory_mappings = array(
-            'Gateway' => 'gateways/',
-            'Handler' => 'handlers/',
-            'Renderer' => 'renderers/',
-            'Listener' => 'listeners/',
-            'Helper' => 'helpers/',
-            'Manager' => 'managers/',
-        );
-
-        foreach ($directory_mappings as $pattern => $directory) {
-            if (strpos($class_without_prefix, $pattern) !== false) {
-                $file_path = $this->base_dir . $directory . $filename;
-                if (file_exists($file_path)) {
-                    return $file_path;
-                }
-            }
-        }
-
-        $root_file_path = $this->base_dir . $filename;
-        if (file_exists($root_file_path)) {
-            return $root_file_path;
-        }
-
-        return false;
     }
 }

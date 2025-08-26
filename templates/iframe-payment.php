@@ -26,6 +26,14 @@ if (!defined('ABSPATH')) {
         </div>
     </div>
 
+    <!-- DEBUG INFO -->
+    <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px;">
+        <strong>DEBUG INFO:</strong><br>
+        iFrame URL: <?php echo esc_html($iframe_url); ?><br>
+        API Origin: <?php echo esc_html($api_origin); ?><br>
+        Token Length: <?php echo strlen($token ?? ''); ?> chars
+    </div>
+
     <div id="bna-iframe-wrapper" class="bna-iframe-wrapper">
         <iframe id="bna-payment-iframe"
                 class="bna-payment-iframe"
@@ -56,6 +64,10 @@ if (!defined('ABSPATH')) {
         apiOrigin: <?php echo json_encode($api_origin); ?>
     };
 
+    // Debug iframe URL
+    console.log('BNA: iFrame URL being loaded:', <?php echo json_encode($iframe_url); ?>);
+    console.log('BNA: API Origin expected:', <?php echo json_encode($api_origin); ?>);
+
     jQuery(document).ready(function($) {
         if (typeof window.bnaPaymentHandler !== 'undefined') {
             window.bnaPaymentHandler.init();
@@ -65,6 +77,11 @@ if (!defined('ABSPATH')) {
             setTimeout(() => {
                 $(this).fadeOut(500);
             }, 5000);
+        });
+
+        // Check iframe load errors
+        $('#bna-payment-iframe').on('error', function() {
+            console.error('BNA: iFrame failed to load the URL:', this.src);
         });
     });
 </script>

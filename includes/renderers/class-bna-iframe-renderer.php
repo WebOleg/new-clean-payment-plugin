@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * BNA Iframe Renderer Class
+ * BNA Iframe Renderer Class with Simple Logging
  */
 class BNA_Iframe_Renderer {
 
@@ -29,6 +29,9 @@ class BNA_Iframe_Renderer {
     public function render() {
         $template_data = $this->prepare_template_data();
         extract($template_data);
+
+        // Simple log
+        BNA_Simple_Logger::log("iFrame rendered for order " . $this->order->get_id());
 
         include BNA_GATEWAY_PLUGIN_PATH . 'templates/iframe-payment.php';
     }

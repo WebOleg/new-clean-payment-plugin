@@ -9,6 +9,11 @@ if (!defined('ABSPATH')) {
  */
 class BNA_Gateway extends WC_Payment_Gateway {
 
+    private $mode;
+    private $iframe_id;
+    private $access_key;
+    private $secret_key;
+
     public function __construct() {
         $this->id = 'bna_gateway';
         $this->icon = '';
