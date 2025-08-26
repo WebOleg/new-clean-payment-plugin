@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * BNA AJAX Handler Class
+ * BNA AJAX Handler Class - Updated to save transaction IDs
  */
 class BNA_Ajax_Handler {
 
@@ -44,7 +44,24 @@ class BNA_Ajax_Handler {
 
         try {
             if ($transaction_id) {
+                // Set the main transaction ID
                 $order->set_transaction_id($transaction_id);
+
+                // CRITICAL: Save transaction ID for webhook matching
+                $order->update_meta_data('_bna_transaction_id', $transaction_id);
+
+                // Also save for referenceUUID matching (BNA might use transaction_id as referenceUUID)
+                $order->update_meta_data('_bna_reference_uuid', $transaction_id);
+
+                BNA_Simple_Logger::log("TRANSACTION ID SAVED VIA AJAX", array(
+                    'order_id' => $order_id,
+                    'transaction_id' => $transaction_id,
+                    'saved_to_meta' => array(
+                        '_transaction_id' => $transaction_id,
+                        '_bna_transaction_id' => $transaction_id,
+                        '_bna_reference_uuid' => $transaction_id
+                    )
+                ));
             }
 
             $order->update_status('processing', 'Payment completed via BNA. Transaction: ' . $transaction_id);
@@ -54,9 +71,21 @@ class BNA_Ajax_Handler {
                 WC()->cart->empty_cart();
             }
 
+            BNA_Simple_Logger::log("ORDER COMPLETED VIA AJAX", array(
+                'order_id' => $order_id,
+                'transaction_id' => $transaction_id,
+                'new_status' => $order->get_status()
+            ));
+
             wp_send_json_success('Order completed');
 
         } catch (Exception $e) {
+            BNA_Simple_Logger::log("AJAX ORDER UPDATE FAILED", array(
+                'order_id' => $order_id,
+                'transaction_id' => $transaction_id,
+                'error' => $e->getMessage()
+            ));
+
             wp_send_json_error('Update failed: ' . $e->getMessage());
         }
     }
